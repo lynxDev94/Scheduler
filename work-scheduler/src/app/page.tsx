@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Users, FileText, Clock, CheckCircle, ArrowRight, Star } from "lucide-react"
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
+import Link from "next/link"
 
 export default function Home() {
   return (
@@ -20,8 +22,17 @@ export default function Home() {
               <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About</a>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">Sign In</Button>
-              <Button size="sm">Get Started</Button>
+              <SignedOut>
+                <Link href="/sign-in">
+                  <Button variant="ghost" size="sm">Sign In</Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button size="sm">Get Started</Button>
+                </Link>
+              </SignedOut>
+              <SignedIn>
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
             </div>
           </div>
         </div>
@@ -43,10 +54,22 @@ export default function Home() {
             Save hours every week with our intuitive drag-and-drop interface.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" className="text-lg px-8 py-6">
-              Start Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <SignedOut>
+              <Link href="/sign-up">
+                <Button size="lg" className="text-lg px-8 py-6">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link href="/dashboard">
+                <Button size="lg" className="text-lg px-8 py-6">
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </SignedIn>
             <Button variant="outline" size="lg" className="text-lg px-8 py-6">
               Watch Demo
             </Button>
@@ -195,7 +218,16 @@ export default function Home() {
                     <span>Email support</span>
                   </div>
                 </div>
-                <Button className="w-full" variant="outline">Get Started Free</Button>
+                <SignedOut>
+                  <Link href="/sign-up">
+                    <Button className="w-full" variant="outline">Get Started Free</Button>
+                  </Link>
+                </SignedOut>
+                <SignedIn>
+                  <Link href="/dashboard">
+                    <Button className="w-full" variant="outline">Go to Dashboard</Button>
+                  </Link>
+                </SignedIn>
               </CardContent>
             </Card>
 
@@ -231,7 +263,16 @@ export default function Home() {
                     <span>Priority support</span>
                   </div>
                 </div>
-                <Button className="w-full">Start Free Trial</Button>
+                <SignedOut>
+                  <Link href="/sign-up">
+                    <Button className="w-full">Start Free Trial</Button>
+                  </Link>
+                </SignedOut>
+                <SignedIn>
+                  <Link href="/dashboard">
+                    <Button className="w-full">Go to Dashboard</Button>
+                  </Link>
+                </SignedIn>
               </CardContent>
             </Card>
 
@@ -281,10 +322,22 @@ export default function Home() {
             Join thousands of businesses that have simplified their employee scheduling with Task-Master.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <SignedOut>
+              <Link href="/sign-up">
+                <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
+                  Start Your Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link href="/dashboard">
+                <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </SignedIn>
             <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-white text-white hover:bg-white hover:text-blue-600">
               Schedule a Demo
             </Button>
