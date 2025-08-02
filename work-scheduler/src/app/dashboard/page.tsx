@@ -13,6 +13,7 @@ import { getOrganizations, getEmployees, getSchedules } from "@/lib/database"
 import { UserButton } from "@clerk/nextjs"
 import Link from "next/link"
 import CreateOrganizationModal from "@/components/create-organization-modal"
+import CreateEmployeeModal from "@/components/create-employee-modal"
 import type { Organization, Employee, Schedule } from "@/lib/supabase"
 
 export default function DashboardPage() {
@@ -23,7 +24,8 @@ export default function DashboardPage() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [totalHours, setTotalHours] = useState(0)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false)
+  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -126,15 +128,17 @@ export default function DashboardPage() {
 
             <div className="flex items-center space-x-4">
               {hasOrganization && (
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => setIsEmployeeModalOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Employee
                 </Button>
               )}
-              <Button size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
+              <Link href="/dashboard/settings">
+                <Button size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+              </Link>
               <UserButton afterSignOutUrl="/" />
             </div>
           </div>
@@ -168,7 +172,7 @@ export default function DashboardPage() {
                     <p className="text-blue-700">Create your first organization to start managing employees and schedules</p>
                   </div>
                 </div>
-                <Button onClick={() => setIsModalOpen(true)}>
+                <Button onClick={() => setIsOrgModalOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Organization
                 </Button>
@@ -244,7 +248,7 @@ export default function DashboardPage() {
             <CardContent className="space-y-4">
               {!hasOrganization ? (
                 <>
-                  <Button className="w-full" onClick={() => setIsModalOpen(true)}>
+                  <Button className="w-full" onClick={() => setIsOrgModalOpen(true)}>
                     <Building2 className="h-4 w-4 mr-2" />
                     Create Your First Organization
                   </Button>
@@ -255,7 +259,7 @@ export default function DashboardPage() {
                 </>
               ) : (
                 <>
-                  <Button className="w-full">
+                  <Button className="w-full" onClick={() => setIsEmployeeModalOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add New Employee
                   </Button>
@@ -376,10 +380,21 @@ export default function DashboardPage() {
       {/* Organization Creation Modal */}
       {userId && (
         <CreateOrganizationModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isOrgModalOpen}
+          onClose={() => setIsOrgModalOpen(false)}
           onSuccess={handleOrganizationCreated}
           userId={userId}
+        />
+      )}
+
+      {/* Employee Creation Modal */}
+      {userId && hasOrganization && (
+        <CreateEmployeeModal
+          isOpen={isEmployeeModalOpen}
+          onClose={() => setIsEmployeeModalOpen(false)}
+          onSuccess={handleOrganizationCreated}
+          organizationId={organizations[0]?.id || ''}
+          roles={organizations[0]?.roles || ['Employee', 'Manager']}
         />
       )}
     </div>

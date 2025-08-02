@@ -1,5 +1,8 @@
-import { auth } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useAuth } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,27 +11,61 @@ import { Calendar, Users, Plus, Search, Filter, MoreHorizontal } from "lucide-re
 import { getOrganizations, getEmployees } from "@/lib/database"
 import { UserButton } from "@clerk/nextjs"
 import Link from "next/link"
+import CreateEmployeeModal from "@/components/create-employee-modal"
+import type { Organization, Employee } from "@/lib/supabase"
 
-export default async function EmployeesPage() {
-  const { userId } = await auth()
+export default function EmployeesPage() {
+  const { userId, isLoaded } = useAuth()
+  const router = useRouter()
   
-  if (!userId) {
-    redirect("/sign-in")
+  const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    if (!isLoaded) return
+    
+    if (!userId) {
+      router.push("/sign-in")
+      return
+    }
+
+    fetchEmployeesData()
+  }, [userId, isLoaded])
+
+  const fetchEmployeesData = async () => {
+    if (!userId) return
+
+    try {
+      const orgs = await getOrganizations(userId)
+      setOrganizations(orgs)
+      
+      if (orgs.length > 0) {
+        const orgId = orgs[0].id
+        const emps = await getEmployees(orgId)
+        setEmployees(emps)
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  // Fetch data from Supabase
-  let organizations: any[] = []
-  let employees: any[] = []
+  const handleEmployeeCreated = () => {
+    fetchEmployeesData()
+  }
 
-  try {
-    organizations = await getOrganizations(userId)
-    
-    if (organizations.length > 0) {
-      const orgId = organizations[0].id
-      employees = await getEmployees(orgId)
-    }
-  } catch (error) {
-    console.error('Error fetching employees:', error)
+  if (!isLoaded || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading employees...</p>
+        </div>
+      </div>
+    )
   }
 
   const hasOrganization = organizations.length > 0
@@ -61,15 +98,15 @@ export default async function EmployeesPage() {
               </Link>
             </nav>
 
-            <div className="flex items-center space-x-4">
-              {hasOrganization && (
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Employee
-                </Button>
-              )}
-              <UserButton afterSignOutUrl="/" />
-            </div>
+                            <div className="flex items-center space-x-4">
+                  {hasOrganization && (
+                    <Button onClick={() => setIsEmployeeModalOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Employee
+                    </Button>
+                  )}
+                  <UserButton afterSignOutUrl="/" />
+                </div>
           </div>
         </div>
       </header>
@@ -85,12 +122,12 @@ export default async function EmployeesPage() {
                 Manage your staff members and their information
               </p>
             </div>
-            {hasOrganization && (
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Employee
-              </Button>
-            )}
+                            {hasOrganization && (
+                  <Button onClick={() => setIsEmployeeModalOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Employee
+                  </Button>
+                )}
           </div>
         </div>
 
@@ -155,10 +192,10 @@ export default async function EmployeesPage() {
                       <Users className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No employees yet</h3>
                       <p className="text-gray-500 mb-6">Get started by adding your first employee</p>
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Your First Employee
-                      </Button>
+                                                <Button onClick={() => setIsEmployeeModalOpen(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Your First Employee
+                          </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -264,8 +301,19 @@ export default async function EmployeesPage() {
               </div>
             </CardContent>
           </Card>
-        )}
-      </main>
-    </div>
-  )
-} 
+                    )}
+          </main>
+
+          {/* Employee Creation Modal */}
+          {userId && hasOrganization && (
+            <CreateEmployeeModal
+              isOpen={isEmployeeModalOpen}
+              onClose={() => setIsEmployeeModalOpen(false)}
+              onSuccess={handleEmployeeCreated}
+              organizationId={organizations[0]?.id || ''}
+              roles={organizations[0]?.roles || ['Employee', 'Manager']}
+            />
+          )}
+        </div>
+      )
+    } 
