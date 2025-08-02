@@ -39,6 +39,18 @@ export default function DashboardPage() {
     fetchDashboardData()
   }, [userId, isLoaded])
 
+  // Listen for settings updates
+  useEffect(() => {
+    const handleSettingsUpdate = () => {
+      fetchDashboardData()
+    }
+
+    window.addEventListener('settingsUpdated', handleSettingsUpdate)
+    return () => {
+      window.removeEventListener('settingsUpdated', handleSettingsUpdate)
+    }
+  }, [])
+
   const fetchDashboardData = async () => {
     if (!userId) return
 
@@ -198,7 +210,7 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Week's Shifts</CardTitle>
+              <CardTitle className="text-sm font-medium">This Week&apos;s Shifts</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -367,10 +379,19 @@ export default function DashboardPage() {
                       <span>Min Staff per Shift:</span>
                       <span className="text-gray-600">{organizations[0].min_staff_per_shift || 1} person</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Timezone:</span>
-                      <span className="text-gray-600">{organizations[0].timezone || 'UTC'}</span>
-                    </div>
+                                            <div className="flex justify-between">
+                          <span>Timezone:</span>
+                          <span className="text-gray-600">
+                            {organizations[0].timezone === 'America/New_York' ? 'Eastern Time' :
+                             organizations[0].timezone === 'America/Chicago' ? 'Central Time' :
+                             organizations[0].timezone === 'America/Denver' ? 'Mountain Time' :
+                             organizations[0].timezone === 'America/Los_Angeles' ? 'Pacific Time' :
+                             organizations[0].timezone === 'Europe/London' ? 'London' :
+                             organizations[0].timezone === 'Europe/Paris' ? 'Paris' :
+                             organizations[0].timezone === 'Asia/Tokyo' ? 'Tokyo' :
+                             organizations[0].timezone || 'UTC'}
+                          </span>
+                        </div>
                   </div>
                 </div>
               </div>

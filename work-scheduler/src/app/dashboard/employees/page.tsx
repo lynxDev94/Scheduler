@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useAuth } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -24,11 +24,13 @@ export default function EmployeesPage() {
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+    useEffect(() => {
     if (!isLoaded) return
-    
+
     if (!userId) {
       router.push("/sign-in")
       return
@@ -36,6 +38,34 @@ export default function EmployeesPage() {
 
     fetchEmployeesData()
   }, [userId, isLoaded])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  // Close dropdown when pressing Escape
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenDropdown(null)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [])
 
   const fetchEmployeesData = async () => {
     if (!userId) return
@@ -80,6 +110,7 @@ export default function EmployeesPage() {
         alert('Failed to remove employee. Please try again.')
       }
     }
+    setOpenDropdown(null)
   }
 
   if (!isLoaded || isLoading) {
@@ -243,24 +274,30 @@ export default function EmployeesPage() {
                           <p className="text-sm text-gray-500">{employee.role}</p>
                         </div>
                       </div>
-                                                <div className="relative">
-                            <Button variant="ghost" size="sm">
+                                                <div className="relative" ref={dropdownRef}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setOpenDropdown(openDropdown === employee.id ? null : employee.id)}
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
-                            <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-[120px]">
-                              <button
-                                onClick={() => handleEditEmployee(employee)}
-                                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteEmployee(employee.id)}
-                                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                              >
-                                Remove
-                              </button>
-                            </div>
+                            {openDropdown === employee.id && (
+                              <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-[120px]">
+                                <button
+                                  onClick={() => handleEditEmployee(employee)}
+                                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteEmployee(employee.id)}
+                                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            )}
                           </div>
                     </div>
                     

@@ -45,6 +45,10 @@ export default function SettingsForm({ organization, onSuccess }: SettingsFormPr
     try {
       await updateOrganization(organization.id, formData)
       onSuccess()
+      // Trigger event for dashboard to refresh
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('settingsUpdated'))
+      }
       alert('Settings saved successfully!')
     } catch (error) {
       console.error('Error updating organization:', error)
