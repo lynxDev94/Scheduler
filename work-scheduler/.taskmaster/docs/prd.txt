@@ -1,0 +1,351 @@
+Product Requirements Document: Task-Master
+Overview
+Task-Master is a SaaS web application enabling managers and small business owners to efficiently schedule employee shifts and working hours, visualize weekly/monthly work schedules, and export them as PDF or Excel files for reporting and payroll.
+This tool solves the complexity, error-proneness, and inconvenience of manual or spreadsheet-based scheduling. It's ideal for retail, hospitality, small offices, and similar businesses where staff scheduling is vital yet often under-served by costly, bloated solutions.
+
+Problem Statement:
+Small teams and managers struggle with inefficient, error-prone, and labor-intensive shift scheduling using spreadsheets or paper.
+They need a simple, centralized, digital system that saves time, reduces mistakes, and makes schedules easily shareable.
+
+Target Users:
+
+Business owners or managers (5-100 employees)
+Shift/team leads in retail, hospitality, and service industries
+HR/support staff managing rosters
+Value Proposition:
+Provides a streamlined, reliable way to build, manage, and export staff schedules—saving time, increasing accuracy, and improving communication.
+
+Core Features
+1. Employee Management
+What it does: Add, edit, or remove employees.
+Why it's important: Cannot schedule shifts without accurate staff lists.
+How it works: Simple form to input name, role, contact info; update or delete employees.
+2. Calendar-Based Scheduler
+What it does: Visual drag-and-drop interface to assign shifts/hours to employees in a calendar view (weekly, with optional monthly overview).
+Why it's important: Central, intuitive assignment of work hours; reduces errors from manual entry.
+How it works: Calendar grid with employee rows and daily columns; click to add or drag to adjust shift; quick editing options.
+3. Shift Templates (Optional in MVP)
+What it does: Save commonly used shifts or schedules as templates.
+Why it's important: Reduces repetitive entry for recurring schedules.
+How it works: Option to save a week/month as a template and apply to future periods.
+4. Export Functionality (PDF/Excel)
+What it does: Exports current schedule as standardized PDF or Excel.
+Why it's important: Allows easy printing, sharing, and payroll reference.
+How it works: Button in UI triggers back-end generation (library-based), file is downloaded to user.
+5. Basic Access Control (MVP: Single Organization Only)
+What it does: Log in as an organization admin, manage one team.
+Why it's important: Security and privacy for schedules.
+How it works: Email + password registration and login (no team invites/user roles at MVP).
+User Experience
+User Personas
+Manager Max:
+Needs to update weekly rota in minutes, print it for noticeboard, send to employees.
+HR Helen:
+Handles official schedules, must export for payroll and compliance.
+Team Lead Tom:
+Sometimes covers for the manager; needs to temp-edit schedules.
+Key User Flows
+Onboarding/First Use:
+Register account → Add business/team info → Add employees → Jump to scheduler.
+Schedule Creation:
+Open calendar view → Select employee cell → Add shift details (start/end/time note) → Repeat for week → Review summary → Export or save.
+Editing Schedules:
+Click shift block → Edit or delete → Drag/drop to change.
+Exporting:
+Click "Export as PDF/Excel" → Download triggers and opens/save as dialog.
+UI/UX Considerations
+Responsive interface for desktop/tablet.
+Calendar view is the homepage/dashboard.
+Drag-and-drop or quick modal input for fast shift editing.
+Clear “Add”/“Edit” buttons, always visible export button.
+Minimal color scheme with clear visual grouping (employee/shift/day).
+Loading and success/error feedback on actions.
+Consider accessibility for forms and keyboard shortcuts (basic at MVP).
+Technical Architecture
+System Components
+Frontend: React (with Next.js) for robust, SSR-capable UI.
+Backend: Node.js + REST API (Express or Next.js API).
+Database: PostgreSQL (hosted, e.g., Supabase or Vercel Postgres).
+Authentication: Supabase Auth or NextAuth.js for basic email/password.
+Exporter: Backend libraries for PDF (e.g., pdf-lib, jsPDF) and Excel (e.g., exceljs).
+File Storage (optional for export): Local generation/download from browser or serverless function.
+Data Models
+Employee
+
+CREATE TABLE employees (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT,
+  email TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+Shift
+
+CREATE TABLE shifts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL,
+  employee_id UUID NOT NULL,
+  date DATE NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  note TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  FOREIGN KEY (employee_id) REFERENCES employees(id)
+);
+User/Org
+
+CREATE TABLE orgs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  owner_id UUID NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+(Note: For MVP, user = single admin.)
+
+APIs and Integrations
+Employee CRUD: /api/employees (GET, POST, PUT, DELETE)
+Shift CRUD: /api/shifts (GET by week, POST, PUT, DELETE)
+Export: /api/export/pdf|excel?period=...
+Auth: /api/auth/*
+(Post-MVP) Email Notification: Disabled in MVP.
+Infrastructure Requirements
+Managed PostgreSQL (Supabase or Vercel)
+Vercel/Netlify deployment for front-end
+Node.js server or edge/serverless functions for export
+ENV variables for secrets (database URL, auth keys)
+Development Roadmap
+Phase 1: Foundation (MVP)
+Required Features:
+
+Organization & admin registration/login
+Employee management (add, edit, delete)
+Shift management (CRUD, calendar view—1 week at a time)
+Export current week as PDF or Excel
+Responsive and accessible UI
+Scope:
+Build minimum core flows so any user can create an account, load in employees, schedule 1 week of shifts, and export.
+
+Phase 2: Quality of Life Enhancements
+Features:
+
+Month view toggle
+Shift templates (save/load common week)
+Employee color-coding in calendar
+UI polish (animations, keyboard shortcuts)
+Better PDF/Excel formatting
+Phase 3: Collaboration & Scaling
+Features:
+
+Multi-user team roles (add/invite others)
+Multiple organizations
+Employee access (read-only personal schedule)
+Notifications (email, print notices)
+Schedule versioning/history
+Custom schedules (split shifts, night, etc.)
+Phase 4: Analytics and HR Features
+Features:
+
+Total hours per employee (week/month)
+Overtime and compliance warnings
+Downloadable payroll reports
+Third-party integrations (Google Calendar, Slack)
+Logical Dependency Chain
+User Authentication → Required to access/manage anything else
+Organization/Employee CRUD → Schedule needs employees/org for context
+Shift CRUD and Calendar UI → Core visible feature, unlocked after prior steps
+Export Functionality → Once schedules are usable, export is valuable immediately
+Templates, Analytics, Multi-User → Builds on stable calendar and export foundation
+Build base User/Org/Employee models → Add Calendar UI with in-memory data → Integrate API persistence → Implement export → Polish UI and flow.
+Risks and Mitigations
+Technical Challenges
+Risk: Complex calendar interactions (drag-and-drop, editing)
+Mitigation: Use existing open-source calendar/drag libraries (FullCalendar, react-beautiful-dnd), start with basic click/modals.
+Risk: Export formatting (PDF, Excel) inconsistencies
+Mitigation: Leverage mature libraries (pdf-lib, exceljs); keep PDF/Excel formatting simple at MVP.
+Risk: Data model complexity with templates/multi-org
+Mitigation: Stick to single-org, single-admin in MVP; design schema flexibly for later scaling.
+MVP & Scope
+Risk: MVP bloat
+Mitigation: Strictly limit user roles (only admin), features (no notifications, no integrations in MVP).
+Risk: UX churn on calendar
+Mitigation: Launch basic and test with 1-2 user flows before fancy interactions.
+Resource Constraints
+Risk: Infrastructure/deployment slowdowns
+Mitigation: Use cloud PaaS (Vercel, Supabase) for speed, avoid custom servers in MVP.
+Appendix
+Research Findings
+Most small teams currently use paper or Google Sheets—core challenge is “quick edit + print”.
+Competing products are either too expensive, too complex, or optimized for larger orgs (feature bloat).
+Technical Specifications
+Nepasirinktas joks failasNepasirinktas joks failas
+some information that I'd like to add: I want to use supabase for backend, next for frontend, shadcdn for component and tailwind for styling. For authentification - choose what you think would be best. Oh, and a landing page is a must too.
+
+Absolutely! Below is an updated and expanded PRD for Task-Master, integrating your stack and requirements (Supabase, Next.js, shadcn/ui, Tailwind, landing page, etc.).
+Every section is clarified to reflect these details, focusing on MVP and extensibility.
+
+Product Requirements Document: Task-Master
+Overview
+Task-Master is a web-based SaaS application for small-to-medium businesses to easily schedule and manage employee work hours.
+The tool provides a visual scheduler, simple staff management, and seamless export to PDF or Excel—eliminating the frustration of manual spreadsheets.
+
+Problem Statement:
+Businesses with shift work need a simple, accurate, cost-effective scheduling solution, not complex or over-priced enterprise tools.
+
+Target Users:
+
+Managers and business owners (retail, F&B, offices)
+HR support/admin staff
+Team leaders
+Value Proposition:
+Task-Master combines the ease of drag-and-drop, centralized data, and effortless export, shortening scheduling time from hours to minutes, and improving team communication.
+
+Core Features
+1. Landing Page
+What it does: Public homepage with product info, pricing, signup/login CTA, and demo screenshots.
+Why it's important: Converts visitors and educates users, essential for SaaS growth.
+How it works: Static Next.js route (e.g., /), featuring shadcn UI and responsive Tailwind design.
+2. Authentication & Onboarding
+What it does: Secure user sign up/in, account/organization creation.
+Why it's important: Restricts schedule/access to the correct people.
+How it works: Supabase Auth with email/password (magic link ready for later). First login prompts org setup.
+3. Employee Management
+What it does: CRUD for team members (name, role, contact).
+Why it's important: Accurate roster before scheduling.
+How it works: Table and modal forms via shadcn components, linking to Supabase DB.
+4. Visual Scheduler (Calendar)
+What it does: Assign/edit shifts to employees via interactive week-view calendar.
+Why it's important: Accelerates schedule creation, reduces mistakes.
+How it works: Drag/drop grid or quick “add shift” modal; live updates from/to Supabase.
+5. Export to PDF/Excel
+What it does: Exports any current schedule view for sharing and archiving.
+Why it's important: Allows use in payroll, notices, or emails.
+How it works: Calls Next.js API route or serverless Supabase function using pdf-lib/exceljs, triggers file download in browser.
+6. Organization Dashboard
+What it does: Shows business/team info, schedule stats (optional in MVP).
+Why it's important: Centralized info, easy navigation.
+User Experience
+User Personas
+Owner Olivia: Wants a clean, idiot-proof interface to set weekly shifts and notify staff.
+HR Hannah: Uses export for payroll, values accuracy and fast edits.
+Manager Mike: Edits schedules on-the-fly, often from tablet or mobile.
+Key User Flows
+Visitor: Sees landing page → Clicks sign up → Registers/Logs in → Onboards.
+Admin: Logs in → Adds employees → Opens scheduler → Assigns shifts → Exports → Logs out.
+Return User: Logs in → Edits upcoming week → Downloads PDF/Excel.
+UI/UX Considerations
+Responsive design, mobile usable for quick edits
+Landing page: bold CTA, benefits, pricing, screenshots (use shadcn and Tailwind for rapid build)
+App pages: sidebar navigation (dashboard, employees, calendar), clear feedback, modals/sidebars for forms (shadcn Dialog)
+Accessibility: keyboard navigation in forms, ARIA labels
+Fast calendar interaction (click-to-add if drag is slow at MVP)
+Technical Architecture
+Stack
+Frontend: Next.js (App Directory) + TypeScript
+Components: shadcn/ui
+Styling: TailwindCSS
+Backend & Auth: Supabase (PostgreSQL, Supabase Auth)
+API/Export: Next.js API routes (for PDF/Excel export)
+Deployment: Vercel (for web), Supabase SaaS (for backend)
+Config: ENV for Supabase keys, API secrets
+System Components
+Landing Page (Next.js Static Page)
+Auth System (Supabase)
+App UI:
+Dashboard (optional for MVP)
+Employee management (CRUD)
+Scheduler (calendar grid—week view)
+Export service (API endpoint)
+Data Models
+(See previous; here’s a simplified view)
+
+-- Users handled by Supabase Auth
+
+-- Organizations
+CREATE TABLE organizations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  owner_user_id UUID NOT NULL REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Employees
+CREATE TABLE employees (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL REFERENCES organizations(id),
+  name TEXT NOT NULL,
+  role TEXT,
+  contact TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Shifts
+CREATE TABLE shifts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  employee_id UUID NOT NULL REFERENCES employees(id),
+  org_id UUID NOT NULL REFERENCES organizations(id),
+  date DATE NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  note TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+APIs and Integrations
+/api/employees (CRUD, secure by user/org)
+/api/shifts (CRUD, week-based query)
+/api/export/pdf and /api/export/excel
+Supabase Auth endpoints (magic link/email+password)
+Infrastructure
+Supabase SaaS for DB/Auth
+Vercel for app hosting, custom public domain
+ENV management via Vercel dashboard
+Development Roadmap
+Phase 1: MVP
+Landing Page: Next.js static, main CTA, screenshots, “Try Demo” option
+Auth: Supabase auth (email/password or magic link)
+Basic App Shell: Sidebar nav, shadcn components, Tailwind layout
+Employee CRUD: Table/list + modal forms
+Scheduler: Week view calendar; assignments via click/modal (drag/drop if feasible)
+Export: “Current week” → Next.js API → pdf-lib/exceljs → download file
+Phase 2: Quality & Feature Enhancements
+Month view toggle
+Employee color tags
+Improved export formatting
+User profile editing
+Tiny analytics (scheduled hours)
+Phase 3: Collaboration & Scale
+Multiple users/orgs (invite admin/member roles)
+Notifications/integrations (email, iCal)
+Mobile-specific tweaks
+Logical Dependency Chain
+Landing Page + User Auth: Public, easy onboarding, leads to locked user area
+Org/Employee Models: Can’t schedule without employees
+Scheduler: App usable as soon as you can create a 1-week plan
+Export: Must build after shift data is ready; adds instant daily value
+UI/UX Polish + Color/Month View: Built after main flows are working
+Risks and Mitigations
+Technical
+
+Drag-and-drop calendar can be tricky Mitigation: Use a simple click/edit form if drag/drop is complex; upgrade later
+Export formatting may be inconsistent Mitigation: Use pdf-lib/exceljs “table” outputs; provide a standard, minimal export first
+MVP Focus
+
+Too much polish or too many features at start can delay launch Mitigation: Prioritize core—landing, auth, scheduler, export only; enhancements later
+Resource
+
+Supabase limits (free plan) for user/auth Mitigation: Monitor usage, upgrade if traction is high
+Appendix
+Technical Specifications
+Frontend: Next.js 14+, App Directory, TypeScript, TailwindCSS, shadcn/ui
+Backend: Supabase (Database + Auth), Next.js app API
+Export: pdf-lib, exceljs in Next.js API
+Deployment/Hosting: Vercel, Supabase, ENV-managed keys
+Minimum Dev Environment
+Node.js 20+, NPM or Yarn
+Supabase CLI (for local development/testing)
+Vercel account for deployment
+GitHub repo for source/tracking
+Security Considerations (Post-MVP)
+Only authenticated sessions may access org data
+Rate limiting, validation on API export
+XSS/SQLi handled by Supabase policies

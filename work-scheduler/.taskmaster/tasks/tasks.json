@@ -1,0 +1,219 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Setup Project Repository",
+        "description": "Initialize a new GitHub repository for the Task-Master project.",
+        "details": "Create a new repository on GitHub named 'task-master'. Clone the repository locally and set up the basic project structure with Next.js and Supabase integration. Ensure the repository is private and add necessary collaborators.",
+        "testStrategy": "Verify repository accessibility and check if the initial commit with the project structure is successful.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Implement Landing Page",
+        "description": "Develop the public landing page for Task-Master using Next.js and TailwindCSS.",
+        "details": "Create a static Next.js page for the landing page. Use TailwindCSS for styling and shadcn/ui components for UI elements. Include product information, pricing, signup/login CTA, and demo screenshots.",
+        "testStrategy": "Test the landing page for responsiveness across different devices and browsers. Ensure all links and CTAs are functional.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Setup Authentication System",
+        "description": "Implement user authentication using Supabase Auth for email/password login.",
+        "details": "Integrate Supabase Auth into the Next.js application. Set up email/password authentication with the option to extend to magic link in the future. Ensure secure handling of user credentials.",
+        "testStrategy": "Test user registration and login flows. Verify that only authenticated users can access protected routes.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Create Organization and Employee Models",
+        "description": "Define database schemas for organizations and employees in Supabase.",
+        "details": "Use the provided SQL schema to create 'organizations' and 'employees' tables in Supabase. Ensure foreign key constraints are correctly set up for data integrity.",
+        "testStrategy": "Validate the schema by inserting test data and checking relational integrity between organizations and employees.",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Develop Employee Management UI",
+        "description": "Create the user interface for managing employees using shadcn components.",
+        "details": "Implement a table view for listing employees and modal forms for adding/editing employee details. Connect the UI to the Supabase backend for CRUD operations.",
+        "testStrategy": "Perform CRUD operations through the UI and verify changes in the Supabase database.",
+        "priority": "medium",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Implement Visual Scheduler",
+        "description": "Develop the calendar-based scheduler for assigning shifts to employees.",
+        "details": "Use a calendar library like FullCalendar with react-beautiful-dnd for drag-and-drop functionality. Implement a week-view calendar with employee rows and daily columns.",
+        "testStrategy": "Test shift assignment and editing through drag-and-drop and modal inputs. Ensure data is correctly saved to the database.",
+        "priority": "high",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Setup Export Functionality",
+        "description": "Implement export functionality to generate PDF and Excel files of schedules.",
+        "details": "Create API routes in Next.js for exporting schedules using pdf-lib and exceljs. Ensure the files are downloadable from the browser.",
+        "testStrategy": "Verify the export functionality by downloading PDF and Excel files and checking their content and format.",
+        "priority": "medium",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Design Organization Dashboard",
+        "description": "Develop a dashboard to display organization and scheduling information.",
+        "details": "Create a dashboard page using shadcn components to show business/team info and schedule statistics. Ensure it is accessible only to authenticated users.",
+        "testStrategy": "Test the dashboard for data accuracy and responsiveness. Verify access control by attempting to access the dashboard without authentication.",
+        "priority": "low",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Implement Responsive Design",
+        "description": "Ensure the application is responsive and accessible on various devices.",
+        "details": "Use TailwindCSS to implement responsive design principles across all pages. Test the application on different screen sizes and orientations.",
+        "testStrategy": "Perform cross-device testing to ensure consistent user experience on mobile, tablet, and desktop.",
+        "priority": "medium",
+        "dependencies": [
+          2,
+          5,
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Integrate Basic Access Control",
+        "description": "Implement basic access control to restrict features based on user roles.",
+        "details": "Use Supabase Auth to manage user sessions and restrict access to certain features for non-admin users. Implement middleware in Next.js for route protection.",
+        "testStrategy": "Test access control by attempting to access restricted features with different user roles.",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Develop Shift Templates Feature",
+        "description": "Implement functionality to save and apply shift templates for recurring schedules.",
+        "details": "Allow users to save a week or month of shifts as a template. Implement a feature to apply these templates to future scheduling periods.",
+        "testStrategy": "Test the creation, saving, and application of shift templates. Verify data persistence and correct application of templates.",
+        "priority": "low",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Enhance Export Formatting",
+        "description": "Improve the formatting of exported PDF and Excel files for better readability.",
+        "details": "Refine the export logic to produce well-formatted documents using pdf-lib and exceljs. Focus on table layouts and styling for clarity.",
+        "testStrategy": "Export schedules and review the document layout and styling. Ensure consistency across different export formats.",
+        "priority": "low",
+        "dependencies": [
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Implement Month View Toggle",
+        "description": "Add functionality to toggle between week and month views in the scheduler.",
+        "details": "Extend the calendar component to support a month view. Allow users to switch between week and month views seamlessly.",
+        "testStrategy": "Test the view toggle functionality and ensure data consistency when switching views.",
+        "priority": "low",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Polish UI/UX",
+        "description": "Enhance the user interface and experience with animations and keyboard shortcuts.",
+        "details": "Use shadcn components and TailwindCSS to add subtle animations and keyboard shortcuts for common actions. Focus on improving overall usability.",
+        "testStrategy": "Conduct user testing to gather feedback on UI/UX improvements. Ensure all enhancements work as intended.",
+        "priority": "low",
+        "dependencies": [
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Deploy Application",
+        "description": "Deploy the Task-Master application to Vercel and configure Supabase for production use.",
+        "details": "Set up Vercel for continuous deployment from the GitHub repository. Configure Supabase with production settings and ensure all environment variables are correctly set.",
+        "testStrategy": "Perform end-to-end testing on the deployed application to ensure all features work as expected in the production environment.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-08-02T14:05:08.683Z",
+      "updated": "2025-08-02T14:08:08.894Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
