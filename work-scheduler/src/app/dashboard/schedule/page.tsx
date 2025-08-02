@@ -5,10 +5,12 @@ import { useAuth } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Plus, Building2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Calendar, Plus, Building2, ChevronLeft, ChevronRight, GripVertical, Users } from "lucide-react"
 import { getOrganizations, getEmployees } from "@/lib/database"
 import { UserButton } from "@clerk/nextjs"
 import Link from "next/link"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import type { Organization, Employee } from "@/lib/supabase"
 
 export default function SchedulePage() {
@@ -19,6 +21,7 @@ export default function SchedulePage() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [currentWeek, setCurrentWeek] = useState(new Date())
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isLoaded) return
@@ -213,58 +216,111 @@ export default function SchedulePage() {
           </Card>
         )}
 
-        {/* Schedule Grid */}
+        {/* Schedule Layout with Employee Sidebar */}
         {hasOrganization && activeEmployees.length > 0 ? (
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <div className="min-w-[800px]">
-                  {/* Grid Header */}
-                  <div className="grid grid-cols-8 border-b bg-gray-50">
-                    <div className="p-3 border-r font-medium text-gray-700">
-                      Time
-                    </div>
-                    {weekDays.map((day, index) => (
-                      <div key={index} className="p-3 border-r text-center">
-                        <div className="font-medium text-gray-900">
-                          {day.toLocaleDateString('en-US', { weekday: 'short' })}
+          <div className="flex gap-6">
+            {/* Employee Sidebar */}
+            <div className="w-80 flex-shrink-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Users className="h-5 w-5" />
+                    <span>Employees</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Drag employees to schedule shifts
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="space-y-1">
+                    {activeEmployees.map((employee) => (
+                      <div
+                        key={employee.id}
+                        className={`flex items-center space-x-3 p-3 cursor-pointer transition-colors hover:bg-gray-50 ${
+                          selectedEmployee === employee.id ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+                        }`}
+                        onClick={() => setSelectedEmployee(employee.id)}
+                      >
+                        <div className="flex-shrink-0">
+                          <GripVertical className="h-4 w-4 text-gray-400" />
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">
+                            {employee.first_name[0]}{employee.last_name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {employee.first_name} {employee.last_name}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">{employee.role}</p>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <Badge variant="secondary" className="text-xs">
+                            ${employee.hourly_rate}/hr
+                          </Badge>
                         </div>
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                  {/* Grid Body */}
-                  <div className="grid grid-cols-8">
-                    {/* Time Column */}
-                    <div className="border-r">
-                      {timeSlots.map((time, index) => (
-                        <div key={index} className="h-16 border-b flex items-center justify-center text-sm text-gray-500 bg-gray-25">
-                          {time}
+            {/* Schedule Grid */}
+            <div className="flex-1">
+              <Card>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <div className="min-w-[800px]">
+                      {/* Grid Header */}
+                      <div className="grid grid-cols-8 border-b bg-gray-50">
+                        <div className="p-3 border-r font-medium text-gray-700">
+                          Time
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Day Columns */}
-                    {weekDays.map((day, dayIndex) => (
-                      <div key={dayIndex} className="border-r">
-                        {timeSlots.map((time, timeIndex) => (
-                          <div 
-                            key={timeIndex} 
-                            className="h-16 border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors"
-                          >
-                            {/* Empty cell - will be populated with shifts in future subtasks */}
+                        {weekDays.map((day, index) => (
+                          <div key={index} className="p-3 border-r text-center">
+                            <div className="font-medium text-gray-900">
+                              {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </div>
                           </div>
                         ))}
                       </div>
-                    ))}
+
+                      {/* Grid Body */}
+                      <div className="grid grid-cols-8">
+                        {/* Time Column */}
+                        <div className="border-r">
+                          {timeSlots.map((time, index) => (
+                            <div key={index} className="h-16 border-b flex items-center justify-center text-sm text-gray-500 bg-gray-25">
+                              {time}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Day Columns */}
+                        {weekDays.map((day, dayIndex) => (
+                          <div key={dayIndex} className="border-r">
+                            {timeSlots.map((time, timeIndex) => (
+                              <div 
+                                key={timeIndex} 
+                                className="h-16 border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors"
+                              >
+                                {/* Empty cell - will be populated with shifts in future subtasks */}
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         ) : hasOrganization && activeEmployees.length === 0 ? (
           <Card>
             <CardContent className="pt-6">
