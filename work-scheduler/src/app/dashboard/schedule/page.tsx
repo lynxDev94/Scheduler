@@ -207,6 +207,15 @@ export default function SchedulePage() {
     return totalHours
   }
 
+  // Calculate total hours worked by all employees in the week
+  const getTotalHoursForAllEmployees = () => {
+    let totalHours = 0
+    activeEmployees.forEach(employee => {
+      totalHours += getTotalHoursForEmployee(employee.id)
+    })
+    return totalHours
+  }
+
   // Calculate shift width based on duration
   const calculateShiftWidth = (startTime: string, endTime: string) => {
     const start = new Date(`2000-01-01T${startTime}`)
@@ -479,7 +488,10 @@ export default function SchedulePage() {
                   <div className="flex border-t bg-gray-50">
                     <div className="p-4 border-r font-medium text-gray-700 w-[250px] flex-shrink-0">
                       <div className="text-sm font-semibold">Weekly Totals</div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-lg font-bold text-blue-600 mt-1">
+                        Total: {getTotalHoursForAllEmployees().toFixed(1)}h
+                      </div>
+                      <div className="text-xs text-gray-500 mt-2">
                         {activeEmployees.map(emp => {
                           const totalHours = getTotalHoursForEmployee(emp.id)
                           return (

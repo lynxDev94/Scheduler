@@ -1,0 +1,117 @@
+ Subtask 1: Basic Schedule Grid Layout
+Goal: Create the foundational weekly grid structure
+Components:
+7-day horizontal layout (Monday-Sunday)
+Time slots vertically (e.g., 6AM-10PM in 1-hour increments)
+Responsive grid that works on desktop and mobile
+Basic styling with Tailwind CSS
+Files to create/modify:
+src/app/dashboard/schedule/page.tsx (replace placeholder)
+src/components/schedule-grid.tsx (new component)
+src/components/schedule-cell.tsx (new component)
+📋 Subtask 2: Employee List Integration
+Goal: Display available employees for scheduling
+Components:
+Sidebar with employee list
+Employee cards showing name, role, availability
+Visual indicators for employee availability per day
+Filter/search employees by role or availability
+Files to create/modify:
+src/components/employee-sidebar.tsx (new component)
+src/components/employee-availability-indicator.tsx (new component)
+Update schedule page to include sidebar
+📋 Subtask 3: Drag & Drop Functionality
+Goal: Enable drag employees to schedule slots
+Components:
+Drag employees from sidebar to schedule cells
+Visual feedback during drag operations
+Drop zones with validation (check availability, business hours)
+Prevent invalid drops (employee not available, outside business hours)
+Files to create/modify:
+src/components/draggable-employee.tsx (new component)
+src/components/drop-zone.tsx (new component)
+src/hooks/use-drag-drop.ts (new custom hook)
+📋 Subtask 4: Shift Creation & Management
+Goal: Create and edit shifts with time ranges
+Components:
+Click to create new shifts
+Resize shifts by dragging edges
+Edit shift details (start/end time, notes)
+Delete shifts
+Shift overlap detection and warnings
+Files to create/modify:
+src/components/shift-card.tsx (new component)
+src/components/shift-editor-modal.tsx (new component)
+src/lib/schedule-utils.ts (new utility functions)
+📋 Subtask 5: Business Rules Integration
+Goal: Apply business settings to scheduling
+Components:
+Respect business hours from settings
+Enforce minimum staff per shift
+Apply default shift length
+Show warnings for rule violations
+Auto-suggest shifts based on availability
+Files to create/modify:
+src/components/schedule-validator.tsx (new component)
+src/lib/business-rules.ts (new utility functions)
+Update schedule components to use business rules
+📋 Subtask 6: Schedule Data Persistence
+Goal: Save and load schedules from database
+Components:
+Save shifts to Supabase schedules table
+Load existing schedules for the week
+Real-time updates when changes are made
+Handle schedule conflicts and errors
+Files to create/modify:
+src/lib/schedule-database.ts (new database functions)
+Update existing src/lib/database.ts
+Add schedule state management
+📋 Subtask 7: Schedule Navigation & Controls
+Goal: Navigate between weeks and manage schedules
+Components:
+Week navigation (previous/next week)
+Date picker for specific weeks
+Copy schedule from previous week
+Clear all shifts for a week
+Save/load schedule templates
+Files to create/modify:
+src/components/schedule-navigation.tsx (new component)
+src/components/schedule-controls.tsx (new component)
+Update schedule page with navigation
+📋 Subtask 8: Schedule Validation & Warnings
+Goal: Provide feedback on schedule quality
+Components:
+Real-time validation of schedule
+Warnings for understaffed shifts
+Conflicts with employee availability
+Overtime warnings
+Schedule completion percentage
+Files to create/modify:
+src/components/schedule-warnings.tsx (new component)
+src/lib/schedule-validation.ts (new utility functions)
+Add validation to schedule components
+📋 Subtask 9: Mobile Responsiveness
+Goal: Make scheduler work on mobile devices
+Components:
+Responsive grid layout for mobile
+Touch-friendly drag and drop
+Mobile-optimized employee selection
+Swipe navigation between days
+Collapsible sidebar on mobile
+Files to create/modify:
+Update all schedule components for mobile
+src/hooks/use-mobile-schedule.ts (new custom hook)
+Add responsive CSS classes
+📋 Subtask 10: Advanced Features & Polish
+Goal: Add advanced features and final polish
+Components:
+Keyboard shortcuts for power users
+Undo/redo functionality
+Bulk operations (copy shifts, assign multiple employees)
+Schedule templates and presets
+Performance optimizations
+Loading states and error handling
+Files to create/modify:
+src/hooks/use-schedule-history.ts (new custom hook)
+src/components/schedule-templates.tsx (new component)
+Final polish and optimization
