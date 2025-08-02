@@ -379,7 +379,7 @@ export default function SchedulePage() {
           <Card>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <div className="min-w-[1090px]">
+                <div className="w-[1090px]">
                   {/* Schedule Header */}
                   <div className="flex border-b bg-gray-50">
                     <div className="p-4 border-r font-medium text-gray-700 w-[250px] flex-shrink-0">
