@@ -305,7 +305,9 @@ export default function DashboardPage() {
                         </p>
                         <p className="text-xs text-gray-500">{employee.role}</p>
                       </div>
-                      <Badge variant="secondary">${employee.hourly_rate}/hr</Badge>
+                      <Badge variant="secondary">
+                        {employee.hourly_rate > 0 ? `$${employee.hourly_rate}/hr` : 'No pricing'}
+                      </Badge>
                     </div>
                   ))}
                   {activeEmployees.length > 3 && (

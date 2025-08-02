@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Calendar, Users, Plus, Search, Filter, MoreHorizontal } from "lucide-react"
-import { getOrganizations, getEmployees } from "@/lib/database"
+import { getOrganizations, getEmployees, deleteEmployee } from "@/lib/database"
 import { UserButton } from "@clerk/nextjs"
 import Link from "next/link"
 import CreateEmployeeModal from "@/components/create-employee-modal"
+import EditEmployeeModal from "@/components/edit-employee-modal"
 import type { Organization, Employee } from "@/lib/supabase"
 
 export default function EmployeesPage() {
@@ -21,6 +22,8 @@ export default function EmployeesPage() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -55,6 +58,28 @@ export default function EmployeesPage() {
 
   const handleEmployeeCreated = () => {
     fetchEmployeesData()
+  }
+
+  const handleEmployeeUpdated = () => {
+    fetchEmployeesData()
+  }
+
+  const handleEditEmployee = (employee: Employee) => {
+    setSelectedEmployee(employee)
+    setIsEditModalOpen(true)
+  }
+
+  const handleDeleteEmployee = async (employeeId: string) => {
+    if (confirm('Are you sure you want to remove this employee? This action cannot be undone.')) {
+      try {
+        await deleteEmployee(employeeId)
+        fetchEmployeesData()
+        alert('Employee removed successfully')
+      } catch (error) {
+        console.error('Error deleting employee:', error)
+        alert('Failed to remove employee. Please try again.')
+      }
+    }
   }
 
   if (!isLoaded || isLoading) {
@@ -218,9 +243,25 @@ export default function EmployeesPage() {
                           <p className="text-sm text-gray-500">{employee.role}</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                                                <div className="relative">
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                            <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-[120px]">
+                              <button
+                                onClick={() => handleEditEmployee(employee)}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteEmployee(employee.id)}
+                                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
                     </div>
                     
                     <div className="space-y-3">
@@ -238,10 +279,12 @@ export default function EmployeesPage() {
                         </div>
                       )}
                       
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Hourly Rate:</span>
-                        <span className="text-gray-900 font-medium">${employee.hourly_rate}/hr</span>
-                      </div>
+                                                <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Hourly Rate:</span>
+                            <span className="text-gray-900 font-medium">
+                              {employee.hourly_rate > 0 ? `$${employee.hourly_rate}/hr` : 'Not set'}
+                            </span>
+                          </div>
                       
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Status:</span>
@@ -252,14 +295,19 @@ export default function EmployeesPage() {
                     </div>
                     
                     <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1">
-                          Edit
-                        </Button>
-                        <Button variant="outline" size="sm" className="flex-1">
-                          Schedule
-                        </Button>
-                      </div>
+                                              <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handleEditEmployee(employee)}
+                          >
+                            Edit
+                          </Button>
+                          <Button variant="outline" size="sm" className="flex-1">
+                            Schedule
+                          </Button>
+                        </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -280,24 +328,24 @@ export default function EmployeesPage() {
                   <div className="text-2xl font-bold text-blue-600">{activeEmployees.length}</div>
                   <div className="text-sm text-gray-500">Total Employees</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    ${activeEmployees.reduce((sum, emp) => sum + emp.hourly_rate, 0).toFixed(2)}
-                  </div>
-                  <div className="text-sm text-gray-500">Total Hourly Rate</div>
-                </div>
+                                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        ${activeEmployees.reduce((sum, emp) => sum + (emp.hourly_rate || 0), 0).toFixed(2)}
+                      </div>
+                      <div className="text-sm text-gray-500">Total Hourly Rate</div>
+                    </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
                     {new Set(activeEmployees.map(emp => emp.role)).size}
                   </div>
                   <div className="text-sm text-gray-500">Unique Roles</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">
-                    {Math.round(activeEmployees.reduce((sum, emp) => sum + emp.hourly_rate, 0) * 40)}
-                  </div>
-                  <div className="text-sm text-gray-500">Weekly Cost (40hrs)</div>
-                </div>
+                                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        ${Math.round(activeEmployees.reduce((sum, emp) => sum + (emp.hourly_rate || 0), 0) * 40)}
+                      </div>
+                      <div className="text-sm text-gray-500">Weekly Cost (40hrs)</div>
+                    </div>
               </div>
             </CardContent>
           </Card>
@@ -311,6 +359,20 @@ export default function EmployeesPage() {
               onClose={() => setIsEmployeeModalOpen(false)}
               onSuccess={handleEmployeeCreated}
               organizationId={organizations[0]?.id || ''}
+              roles={organizations[0]?.roles || ['Employee', 'Manager']}
+            />
+          )}
+
+          {/* Employee Edit Modal */}
+          {userId && hasOrganization && selectedEmployee && (
+            <EditEmployeeModal
+              isOpen={isEditModalOpen}
+              onClose={() => {
+                setIsEditModalOpen(false)
+                setSelectedEmployee(null)
+              }}
+              onSuccess={handleEmployeeUpdated}
+              employee={selectedEmployee}
               roles={organizations[0]?.roles || ['Employee', 'Manager']}
             />
           )}

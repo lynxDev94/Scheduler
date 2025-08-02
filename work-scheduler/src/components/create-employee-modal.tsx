@@ -24,6 +24,7 @@ export default function CreateEmployeeModal({ isOpen, onClose, onSuccess, organi
     hourly_rate: 15.00
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [showPricing, setShowPricing] = useState(true)
 
   if (!isOpen) return null
 
@@ -39,7 +40,7 @@ export default function CreateEmployeeModal({ isOpen, onClose, onSuccess, organi
         email: formData.email || undefined,
         phone: formData.phone || undefined,
         role: formData.role,
-        hourly_rate: formData.hourly_rate,
+        hourly_rate: showPricing ? formData.hourly_rate : 0,
         availability: {
           monday: ["9AM", "5PM"],
           tuesday: ["9AM", "5PM"],
@@ -143,34 +144,50 @@ export default function CreateEmployeeModal({ isOpen, onClose, onSuccess, organi
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Role
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Role
+              </label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {roles.map((role) => (
+                  <option key={role} value={role}>{role}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Pricing Section */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={showPricing}
+                    onChange={(e) => setShowPricing(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Enable pricing for this employee</span>
                 </label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {roles.map((role) => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
-                </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Hourly Rate ($)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.hourly_rate}
-                  onChange={(e) => setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+              
+              {showPricing && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Hourly Rate ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.hourly_rate}
+                    onChange={(e) => setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
