@@ -1,11 +1,16 @@
--- Task-Master Database Schema
+-- Fix the owner_id column type to accept Clerk user IDs
 -- Run this in your Supabase SQL Editor
 
--- Create organizations table
+-- First, drop the existing table if it exists
+DROP TABLE IF EXISTS schedules CASCADE;
+DROP TABLE IF EXISTS employees CASCADE;
+DROP TABLE IF EXISTS organizations CASCADE;
+
+-- Recreate the organizations table with correct owner_id type
 CREATE TABLE organizations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
-  owner_id TEXT NOT NULL,  -- Changed back to TEXT for Clerk user IDs
+  owner_id TEXT NOT NULL,  -- TEXT for Clerk user IDs
   business_hours JSONB DEFAULT '{"monday": "9AM-5PM", "tuesday": "9AM-5PM", "wednesday": "9AM-5PM", "thursday": "9AM-5PM", "friday": "9AM-5PM", "saturday": "9AM-5PM", "sunday": "9AM-5PM"}',
   timezone TEXT DEFAULT 'UTC',
   roles JSONB DEFAULT '["Employee", "Manager"]',
@@ -45,7 +50,7 @@ CREATE TABLE schedules (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create indexes
+-- Create indexes for better performance
 CREATE INDEX idx_organizations_owner_id ON organizations(owner_id);
 CREATE INDEX idx_employees_organization_id ON employees(organization_id);
 CREATE INDEX idx_employees_is_active ON employees(is_active);
