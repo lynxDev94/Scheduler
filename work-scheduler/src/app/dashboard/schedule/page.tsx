@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, Plus, Building2, ChevronLeft, ChevronRight, GripVertical, Users, Clock, X } from "lucide-react"
-import { getOrganizations, getEmployees } from "@/lib/database"
+import { getOrganizations, getEmployees, createSchedule, getSchedulesForWeek, deleteSchedule } from "@/lib/database"
 import { UserButton } from "@clerk/nextjs"
 import Link from "next/link"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -59,17 +59,31 @@ export default function SchedulePage() {
     fetchScheduleData()
   }, [userId, isLoaded])
 
+  // Reload schedules when currentWeek changes
+  useEffect(() => {
+    if (organizations.length > 0 && !isLoading) {
+      loadSchedulesForWeek()
+    }
+  }, [currentWeek, organizations.length, isLoading])
+
   const fetchScheduleData = async () => {
     if (!userId) return
 
     try {
+      console.log('Fetching schedule data for user:', userId)
+      
       const orgs = await getOrganizations(userId)
+      console.log('Organizations loaded:', orgs)
       setOrganizations(orgs)
 
       if (orgs.length > 0) {
         const orgId = orgs[0].id
         const emps = await getEmployees(orgId)
+        console.log('Employees loaded:', emps)
         setEmployees(emps)
+
+        // Load schedules for the current week
+        await loadSchedulesForWeek()
       }
     } catch (error) {
       console.error('Error fetching schedule data:', error)
@@ -78,24 +92,65 @@ export default function SchedulePage() {
     }
   }
 
-  const goToPreviousWeek = () => {
-    setCurrentWeek(prev => {
-      const newDate = new Date(prev)
-      newDate.setDate(newDate.getDate() - 7)
-      return newDate
-    })
+  const goToPreviousWeek = async () => {
+    const newWeek = new Date(currentWeek)
+    newWeek.setDate(newWeek.getDate() - 7)
+    setCurrentWeek(newWeek)
+    await loadSchedulesForWeek(newWeek)
   }
 
-  const goToNextWeek = () => {
-    setCurrentWeek(prev => {
-      const newDate = new Date(prev)
-      newDate.setDate(newDate.getDate() + 7)
-      return newDate
-    })
+  const goToNextWeek = async () => {
+    const newWeek = new Date(currentWeek)
+    newWeek.setDate(newWeek.getDate() + 7)
+    setCurrentWeek(newWeek)
+    await loadSchedulesForWeek(newWeek)
   }
 
-  const goToCurrentWeek = () => {
-    setCurrentWeek(new Date())
+  const goToCurrentWeek = async () => {
+    const newWeek = new Date()
+    setCurrentWeek(newWeek)
+    await loadSchedulesForWeek(newWeek)
+  }
+
+  // Load schedules for the current week
+  const loadSchedulesForWeek = async (weekDate?: Date) => {
+    if (!organizations[0]?.id) return
+
+    const targetWeek = weekDate || currentWeek
+
+    try {
+      const weekStart = getWeekStart(targetWeek)
+      const weekEnd = new Date(weekStart)
+      weekEnd.setDate(weekEnd.getDate() + 6)
+      
+      const weekStartStr = weekStart.toISOString().split('T')[0]
+      const weekEndStr = weekEnd.toISOString().split('T')[0]
+      
+      console.log('Loading schedules for week:', { weekStartStr, weekEndStr, organizationId: organizations[0].id })
+      
+      const schedules = await getSchedulesForWeek(organizations[0].id, weekStartStr, weekEndStr)
+      
+      console.log('Raw schedules from database:', schedules)
+      
+      // Convert database schedules to our Shift format
+      const convertedShifts = schedules.map(schedule => ({
+        id: schedule.id,
+        employeeId: schedule.employee_id,
+        employeeName: `${schedule.employees.first_name} ${schedule.employees.last_name}`,
+        date: schedule.date,
+        startTime: schedule.start_time.substring(0, 5), // Trim seconds (HH:MM:SS -> HH:MM)
+        endTime: schedule.end_time.substring(0, 5), // Trim seconds (HH:MM:SS -> HH:MM)
+        role: schedule.role,
+        hourlyRate: schedule.hourly_rate,
+        type: (schedule.type as 'shift' | 'holiday' | 'day-off') || 'shift' // Fallback to 'shift' if type is not available
+      }))
+      
+      console.log('Converted shifts:', convertedShifts)
+      
+      setShifts(convertedShifts)
+    } catch (error) {
+      console.error('Error loading schedules:', error)
+    }
   }
 
   // Get the start of the current week (Monday)
@@ -131,35 +186,62 @@ export default function SchedulePage() {
     setIsCreateShiftOpen(true)
   }
 
-  const handleCreateShift = () => {
+  const handleCreateShift = async () => {
     if (!selectedCell) return
 
     // For holidays and day-offs, we don't need time validation
     if (newShift.type === 'shift' && (!newShift.startTime || !newShift.endTime)) return
 
     const employee = employees.find(emp => emp.id === selectedCell.employeeId)
-    if (!employee) return
+    if (!employee || !organizations[0]) return
 
-    const shift: Shift = {
-      id: `shift-${Date.now()}`,
-      employeeId: selectedCell.employeeId,
-      employeeName: `${employee.first_name} ${employee.last_name}`,
-      date: selectedCell.day.toISOString().split('T')[0],
-      startTime: newShift.startTime,
-      endTime: newShift.endTime,
-      role: newShift.role || employee.role,
-      hourlyRate: employee.hourly_rate,
-      type: newShift.type
+    try {
+      // Save to database
+      const savedSchedule = await createSchedule({
+        organization_id: organizations[0].id,
+        employee_id: selectedCell.employeeId,
+        date: selectedCell.day.toISOString().split('T')[0],
+        start_time: newShift.startTime,
+        end_time: newShift.endTime,
+        role: newShift.role || employee.role,
+        hourly_rate: employee.hourly_rate,
+        type: newShift.type
+      })
+
+      // Add to local state
+      const shift: Shift = {
+        id: savedSchedule.id,
+        employeeId: selectedCell.employeeId,
+        employeeName: `${employee.first_name} ${employee.last_name}`,
+        date: selectedCell.day.toISOString().split('T')[0],
+        startTime: newShift.startTime,
+        endTime: newShift.endTime,
+        role: newShift.role || employee.role,
+        hourlyRate: employee.hourly_rate,
+        type: newShift.type
+      }
+
+      setShifts(prev => [...prev, shift])
+      setIsCreateShiftOpen(false)
+      setSelectedCell(null)
+      setNewShift({ employeeId: '', startTime: '', endTime: '', role: '', type: 'shift' })
+    } catch (error) {
+      console.error('Error creating shift:', error)
+      // You might want to show an error message to the user here
     }
-
-    setShifts(prev => [...prev, shift])
-    setIsCreateShiftOpen(false)
-    setSelectedCell(null)
-    setNewShift({ employeeId: '', startTime: '', endTime: '', role: '', type: 'shift' })
   }
 
-  const handleDeleteShift = (shiftId: string) => {
-    setShifts(prev => prev.filter(shift => shift.id !== shiftId))
+  const handleDeleteShift = async (shiftId: string) => {
+    try {
+      // Delete from database
+      await deleteSchedule(shiftId)
+      
+      // Remove from local state
+      setShifts(prev => prev.filter(shift => shift.id !== shiftId))
+    } catch (error) {
+      console.error('Error deleting shift:', error)
+      // You might want to show an error message to the user here
+    }
   }
 
   // Get shifts for a specific employee and day
@@ -423,7 +505,7 @@ export default function SchedulePage() {
                             </p>
                             <p className="text-sm text-gray-500 truncate">{employee.role}</p>
                             <Badge variant="secondary" className="text-xs mt-1">
-                              ${employee.hourly_rate}/hr
+                              {employee.hourly_rate > 0 ? `$${employee.hourly_rate}/hr` : ''}
                             </Badge>
                           </div>
                         </div>

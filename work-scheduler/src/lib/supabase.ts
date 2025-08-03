@@ -46,10 +46,12 @@ export interface Schedule {
   id: string
   organization_id: string
   employee_id: string
-  day_of_week: number
+  date: string
   start_time: string
   end_time: string
-  date?: string
+  role: string
+  hourly_rate: number
+  type: 'shift' | 'holiday' | 'day-off'
   notes?: string
   created_at: string
   updated_at: string

@@ -79,15 +79,93 @@ export async function deleteEmployee(id: string) {
 }
 
 // Schedule functions
-export async function createSchedule(data: Omit<Schedule, 'id' | 'created_at' | 'updated_at'>) {
-  const { data: schedule, error } = await supabase
+export async function createSchedule(data: {
+  organization_id: string
+  employee_id: string
+  date: string
+  start_time: string
+  end_time: string
+  role: string
+  hourly_rate: number
+  type: 'shift' | 'holiday' | 'day-off'
+  notes?: string
+}) {
+  try {
+    // First try with all fields including type
+    const { data: schedule, error } = await supabase
+      .from('schedules')
+      .insert({
+        organization_id: data.organization_id,
+        employee_id: data.employee_id,
+        date: data.date,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        role: data.role,
+        hourly_rate: data.hourly_rate,
+        type: data.type,
+        notes: data.notes
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Supabase error with type field:', error)
+      
+      // If that fails, try without the type field (fallback for existing table structure)
+      const { data: scheduleFallback, error: fallbackError } = await supabase
+        .from('schedules')
+        .insert({
+          organization_id: data.organization_id,
+          employee_id: data.employee_id,
+          date: data.date,
+          start_time: data.start_time,
+          end_time: data.end_time,
+          role: data.role,
+          hourly_rate: data.hourly_rate,
+          notes: data.notes
+        })
+        .select()
+        .single()
+
+      if (fallbackError) {
+        console.error('Supabase error without type field:', fallbackError)
+        throw fallbackError
+      }
+      
+      return scheduleFallback
+    }
+    
+    return schedule
+  } catch (error) {
+    console.error('Error in createSchedule:', error)
+    throw error
+  }
+}
+
+export async function getSchedulesForWeek(organizationId: string, weekStart: string, weekEnd: string) {
+  console.log('getSchedulesForWeek called with:', { organizationId, weekStart, weekEnd })
+  
+  const { data: schedules, error } = await supabase
     .from('schedules')
-    .insert(data)
-    .select()
-    .single()
+    .select(`
+      *,
+      employees (
+        first_name,
+        last_name,
+        role,
+        hourly_rate
+      )
+    `)
+    .eq('organization_id', organizationId)
+    .gte('date', weekStart)
+    .lte('date', weekEnd)
+    .order('date', { ascending: true })
+    .order('start_time', { ascending: true })
+
+  console.log('Supabase query result:', { schedules, error })
 
   if (error) throw error
-  return schedule
+  return schedules
 }
 
 export async function getSchedules(organizationId: string, date?: string) {
@@ -98,7 +176,8 @@ export async function getSchedules(organizationId: string, date?: string) {
       employees (
         first_name,
         last_name,
-        role
+        role,
+        hourly_rate
       )
     `)
     .eq('organization_id', organizationId)

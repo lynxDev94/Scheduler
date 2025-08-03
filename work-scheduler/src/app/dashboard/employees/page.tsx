@@ -42,8 +42,13 @@ export default function EmployeesPage() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null)
+      const target = event.target as Node
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
+        // Check if the click is on a dropdown menu item
+        const isDropdownItem = (target as Element)?.closest('[data-dropdown-item]')
+        if (!isDropdownItem) {
+          setOpenDropdown(null)
+        }
       }
     }
 
@@ -248,17 +253,17 @@ export default function EmployeesPage() {
                       <Users className="h-16 w-16 mx-auto mb-4 text-gray-300" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No employees yet</h3>
                       <p className="text-gray-500 mb-6">Get started by adding your first employee</p>
-                                                <Button onClick={() => setIsEmployeeModalOpen(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Your First Employee
-                          </Button>
+                      <Button onClick={() => setIsEmployeeModalOpen(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Your First Employee
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               </div>
             ) : (
               activeEmployees.map((employee) => (
-                <Card key={employee.id} className="hover:shadow-md transition-shadow">
+                <Card key={employee.id} className="hover:shadow-md transition-shadow relative">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
@@ -274,31 +279,46 @@ export default function EmployeesPage() {
                           <p className="text-sm text-gray-500">{employee.role}</p>
                         </div>
                       </div>
-                                                <div className="relative" ref={dropdownRef}>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => setOpenDropdown(openDropdown === employee.id ? null : employee.id)}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                            {openDropdown === employee.id && (
-                              <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-[120px]">
-                                <button
-                                  onClick={() => handleEditEmployee(employee)}
-                                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteEmployee(employee.id)}
-                                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            )}
-                          </div>
+                      
+                      <div className="relative z-20" ref={dropdownRef}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setOpenDropdown(openDropdown === employee.id ? null : employee.id)
+                          }}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                         {openDropdown === employee.id && (
+                           <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] min-w-[120px]">
+                             <button
+                               onClick={(e) => {
+                                 e.preventDefault()
+                                 e.stopPropagation()
+                                 handleEditEmployee(employee)
+                               }}
+                               className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100"
+                               data-dropdown-item
+                             >
+                               Edit
+                             </button>
+                             <button
+                               onClick={(e) => {
+                                 e.preventDefault()
+                                 e.stopPropagation()
+                                 handleDeleteEmployee(employee.id)
+                               }}
+                               className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                               data-dropdown-item
+                             >
+                               Remove
+                             </button>
+                           </div>
+                         )}
+                      </div>
                     </div>
                     
                     <div className="space-y-3">
@@ -316,12 +336,12 @@ export default function EmployeesPage() {
                         </div>
                       )}
                       
-                                                <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">Hourly Rate:</span>
-                            <span className="text-gray-900 font-medium">
-                              {employee.hourly_rate > 0 ? `$${employee.hourly_rate}/hr` : 'Not set'}
-                            </span>
-                          </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Hourly Rate:</span>
+                        <span className="text-gray-900 font-medium">
+                          {employee.hourly_rate > 0 ? `$${employee.hourly_rate}/hr` : 'Not set'}
+                        </span>
+                      </div>
                       
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Status:</span>
@@ -332,19 +352,19 @@ export default function EmployeesPage() {
                     </div>
                     
                     <div className="mt-4 pt-4 border-t border-gray-100">
-                                              <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1"
-                            onClick={() => handleEditEmployee(employee)}
-                          >
-                            Edit
-                          </Button>
-                          <Button variant="outline" size="sm" className="flex-1">
-                            Schedule
-                          </Button>
-                        </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => handleEditEmployee(employee)}
+                        >
+                          Edit
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1">
+                          Schedule
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
