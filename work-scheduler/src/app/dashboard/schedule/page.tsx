@@ -5,7 +5,7 @@ import { useAuth } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Plus, Building2, ChevronLeft, ChevronRight, GripVertical, Users, Clock, X } from "lucide-react"
+import { Calendar, Plus, Building2, ChevronLeft, ChevronRight, GripVertical, Users, Clock, X, Download } from "lucide-react"
 import { getOrganizations, getEmployees, createSchedule, getSchedulesForWeek, deleteSchedule } from "@/lib/database"
 import { UserButton } from "@clerk/nextjs"
 import Link from "next/link"
@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Organization, Employee } from "@/lib/supabase"
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 interface Shift {
   id: string
@@ -357,6 +359,110 @@ export default function SchedulePage() {
   const hasOrganization = organizations.length > 0
   const activeEmployees = employees.filter(emp => emp.is_active)
 
+  const exportScheduleToPDF = () => {
+    if (!organizations[0]?.id) return;
+  
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.text(`${organizations[0].name} - Weekly Schedule`, 14, 22);
+    
+    // Add week range
+    doc.setFontSize(12);
+    doc.text(`Week of ${weekStart.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric',
+      year: 'numeric' 
+    })} - ${new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric',
+      year: 'numeric' 
+    })}`, 14, 32);
+  
+    // Create grid-style table
+    const tableData: any[][] = [];
+    
+    // Header row with day names
+    const headerRow = ['Employee'];
+    weekDays.forEach(day => {
+      headerRow.push(day.toLocaleDateString('en-US', { weekday: 'short' }));
+    });
+    tableData.push(headerRow);
+    
+    // Employee rows
+    activeEmployees.forEach(employee => {
+      const employeeRow = [`${employee.first_name} ${employee.last_name}`];
+      
+      weekDays.forEach(day => {
+        const shiftsForDay = getShiftsForEmployeeAndDay(employee.id, day);
+        if (shiftsForDay.length > 0) {
+          const shiftText = shiftsForDay.map(shift => {
+            if (shift.type === 'shift') {
+              return `${shift.startTime}-${shift.endTime}`;
+            } else if (shift.type === 'holiday') {
+              return 'HOLIDAY';
+            } else {
+              return 'DAY OFF';
+            }
+          }).join(', ');
+          employeeRow.push(shiftText);
+        } else {
+          employeeRow.push('-');
+        }
+      });
+      
+      tableData.push(employeeRow);
+    });
+  
+    // Add summary row
+    const summaryRow = ['Weekly Totals'];
+    weekDays.forEach(day => {
+      const totalHours = getTotalHoursForDay(day);
+      summaryRow.push(`${totalHours.toFixed(1)}h`);
+    });
+    tableData.push(summaryRow);
+  
+    // Create the table with custom styling
+    autoTable(doc, {
+      head: [tableData[0]], // First row as header
+      body: tableData.slice(1), // Rest as body
+      startY: 40,
+      styles: {
+        fontSize: 10,
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [66, 139, 202],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+      columnStyles: {
+        0: { cellWidth: 50 }, // Employee column wider
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      didDrawCell: function(data) {
+        // Style the summary row (last row)
+        if (data.row.index === tableData.length - 2) { // -2 because we removed header
+          doc.setFillColor(240, 240, 240);
+          doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
+          doc.setTextColor(0, 0, 0);
+          doc.setFont(undefined, 'bold'); // Fixed: use setFont instead of setFontStyle
+        }
+      }
+    });
+  
+    // Add total hours at the bottom
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold'); // Fixed: use setFont instead of setFontStyle
+    doc.text(`Total Hours: ${getTotalHoursForAllEmployees().toFixed(1)}h`, 14, finalY);
+  
+    doc.save(`schedule_${organizations[0].name}_${weekStart.toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -411,6 +517,10 @@ export default function SchedulePage() {
               </Button>
               <Button variant="outline" onClick={goToNextWeek}>
                 <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" onClick={exportScheduleToPDF} className="ml-4">
+                <Download className="h-4 w-4 mr-2" />
+                Export PDF
               </Button>
             </div>
           </div>

@@ -277,7 +277,7 @@ export default function DashboardPage() {
                   </Button>
                   <Button variant="outline" className="w-full">
                     <Calendar className="h-4 w-4 mr-2" />
-                    Create Weekly Schedule
+                   <Link href="/dashboard/schedule"> Create Weekly Schedule</Link>
                   </Button>
                   <Button variant="outline" className="w-full">
                     <FileText className="h-4 w-4 mr-2" />
