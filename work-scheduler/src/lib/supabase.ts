@@ -38,6 +38,9 @@ export interface Employee {
     [key: string]: [string, string]
   }
   is_active: boolean
+  working_days?: string[]
+  start_time?: string
+  end_time?: string
   created_at: string
   updated_at: string
 }

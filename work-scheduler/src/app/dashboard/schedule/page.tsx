@@ -567,7 +567,9 @@ export default function SchedulePage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-500">
-                    {activeEmployees.length} employees available • {shifts.length} shifts scheduled
+                    {activeEmployees.length} employees available • {shifts.filter(shift => 
+  activeEmployees.some(employee => employee.id === shift.employeeId)
+).length} shifts scheduled
                   </span>
                 </div>
               </div>

@@ -93,6 +93,8 @@ export default function EmployeesPage() {
 
   const handleEmployeeCreated = () => {
     fetchEmployeesData()
+    // Trigger dashboard refresh
+    window.dispatchEvent(new Event('employeeAdded'))
   }
 
   const handleEmployeeUpdated = () => {
@@ -106,12 +108,14 @@ export default function EmployeesPage() {
 
   const handleDeleteEmployee = async (employeeId: string) => {
     if (confirm('Are you sure you want to remove this employee? This action cannot be undone.')) {
-      try {
-        await deleteEmployee(employeeId)
-        fetchEmployeesData()
-        alert('Employee removed successfully')
-      } catch (error) {
-        console.error('Error deleting employee:', error)
+              try {
+          await deleteEmployee(employeeId)
+          fetchEmployeesData()
+          // Trigger dashboard refresh
+          window.dispatchEvent(new Event('employeeDeleted'))
+          alert('Employee removed successfully')
+        } catch (error) {
+          console.error('Error deleting employee:', error)
         alert('Failed to remove employee. Please try again.')
       }
     }

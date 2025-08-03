@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Users, FileText, Plus, Settings, BarChart3, Clock, Building2 } from "lucide-react"
-import { getOrganizations, getEmployees, getSchedules } from "@/lib/database"
+import { getOrganizations, getEmployees, getSchedulesForWeek } from "@/lib/database"
 import { UserButton } from "@clerk/nextjs"
 import Link from "next/link"
 import CreateOrganizationModal from "@/components/create-organization-modal"
@@ -39,6 +39,22 @@ export default function DashboardPage() {
     fetchDashboardData()
   }, [userId, isLoaded])
 
+  // Listen for employee changes
+  useEffect(() => {
+    const handleEmployeeChange = () => {
+      fetchDashboardData()
+    }
+
+    // Listen for custom events
+    window.addEventListener('employeeDeleted', handleEmployeeChange)
+    window.addEventListener('employeeAdded', handleEmployeeChange)
+
+    return () => {
+      window.removeEventListener('employeeDeleted', handleEmployeeChange)
+      window.removeEventListener('employeeAdded', handleEmployeeChange)
+    }
+  }, [])
+
   // Listen for settings updates
   useEffect(() => {
     const handleSettingsUpdate = () => {
@@ -61,7 +77,19 @@ export default function DashboardPage() {
       if (orgs.length > 0) {
         const orgId = orgs[0].id
         const emps = await getEmployees(orgId)
-        const scheds = await getSchedules(orgId)
+        // Calculate current week dates (same logic as schedule page)
+        const currentDate = new Date()
+        const currentDay = currentDate.getDay()
+        const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1
+        const weekStart = new Date(currentDate)
+        weekStart.setDate(currentDate.getDate() - daysFromMonday)
+        weekStart.setHours(0, 0, 0, 0)
+        
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekStart.getDate() + 6)
+        weekEnd.setHours(23, 59, 59, 999)
+
+        const scheds = await getSchedulesForWeek(orgId, weekStart.toISOString().split('T')[0], weekEnd.toISOString().split('T')[0])
         
         setEmployees(emps)
         setSchedules(scheds)
@@ -83,7 +111,18 @@ export default function DashboardPage() {
             }
           }
         })
-        setTotalHours(hours)
+        // Calculate total hours from actual schedules (only for existing employees)
+        const calculatedHours = scheds
+          .filter(schedule => 
+            emps.some(employee => employee.id === schedule.employee_id)
+          )
+          .reduce((total, schedule) => {
+            const start = new Date(`2000-01-01T${schedule.start_time}`)
+            const end = new Date(`2000-01-01T${schedule.end_time}`)
+            const shiftHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+            return total + shiftHours
+          }, 0)
+        setTotalHours(calculatedHours)
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
@@ -109,7 +148,10 @@ export default function DashboardPage() {
 
   const hasOrganization = organizations.length > 0
   const activeEmployees = employees.filter(emp => emp.is_active)
-  const thisWeekSchedules = schedules.length // Simplified for now
+  // Only count schedules for employees that still exist
+  const thisWeekSchedules = schedules.filter(schedule => 
+    employees.some(employee => employee.id === schedule.employee_id)
+  ).length
 
   return (
     <div className="min-h-screen bg-gray-50">
